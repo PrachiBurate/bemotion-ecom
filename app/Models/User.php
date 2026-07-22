@@ -1,49 +1,57 @@
-<?php
+<?php 
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
+        'is_admin',
+        'role_id',
+        'status',
+        'phone',
+        'profile_image',
+        'last_login_at'
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+    protected $casts = [
+        'is_admin' => 'boolean',
+        'status' => 'boolean',
+        'last_login_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+  public function role()
+{
+    return $this->belongsTo(Role::class);
+}
+
+public function hasPermission($slug)
+{
+    if ($this->is_admin == 1) {
+        return true;
     }
+
+    if (!$this->role) {
+        return false;
+    }
+
+    //   FORCE LOAD (IMPORTANT FIX)
+    $permissions = $this->role->permissions()->get();
+
+    return $permissions->contains('slug', $slug);
+}
 }

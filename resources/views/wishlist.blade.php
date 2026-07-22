@@ -51,120 +51,110 @@
                                                 <th><i class="fas fa-rocket-launch"></i>Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>
-                                                    <div class="product-thumb-item">
-                                                        <div class="product-img">
-                                                            <img src="assets/images/products/cart-1.jpg" alt="Product Thumbnail">
-                                                        </div>
-                                                        <div class="product-info">
-                                                            <h4 class="title"><a href="{{ url('shop-details') }}">Athletic leggings with mesh panels</a></h4>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="price"><span class="currrency">$</span> 180.00</div>
-                                                </td>
-                                                <td>
-                                                    <div class="product-stock">24 in stock</div>
-                                                </td>
-                                                <td>
-                                                    <div class="action-cart">
-                                                        <div class="quantity-input">
-                                                            <button class="quantity-down"><i class="far fa-minus"></i></button>
-                                                            <input class="quantity" type="text" value="1" name="quantity">
-                                                            <button class="quantity-up"><i class="far fa-plus"></i></button>
-                                                        </div>
-                                                        <div class="cart-remove"><i class="far fa-times"></i></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="product-thumb-item">
-                                                        <div class="product-img">
-                                                            <img src="assets/images/products/cart-2.jpg" alt="Product Thumbnail">
-                                                        </div>
-                                                        <div class="product-info">
-                                                            <h4 class="title"><a href="{{ url('shop-details') }}">Lightweight linen summer dress with belt</a></h4>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="price"><span class="currrency">$</span> 180.00</div>
-                                                </td>
-                                                <td>
-                                                    <div class="product-stock">24 in stock</div>
-                                                </td>
-                                                <td>
-                                                    <div class="action-cart">
-                                                        <div class="quantity-input">
-                                                            <button class="quantity-down"><i class="far fa-minus"></i></button>
-                                                            <input class="quantity" type="text" value="1" name="quantity">
-                                                            <button class="quantity-up"><i class="far fa-plus"></i></button>
-                                                        </div>
-                                                        <div class="cart-remove"><i class="far fa-times"></i></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="product-thumb-item">
-                                                        <div class="product-img">
-                                                            <img src="assets/images/products/cart-3.jpg" alt="Product Thumbnail">
-                                                        </div>
-                                                        <div class="product-info">
-                                                            <h4 class="title"><a href="{{ url('shop-details') }}">Floral print sundress with adjustable straps</a></h4>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="price"><span class="currrency">$</span> 180.00</div>
-                                                </td>
-                                                <td>
-                                                    <div class="product-stock">24 in stock</div>
-                                                </td>
-                                                <td>
-                                                    <div class="action-cart">
-                                                        <div class="quantity-input">
-                                                            <button class="quantity-down"><i class="far fa-minus"></i></button>
-                                                            <input class="quantity" type="text" value="1" name="quantity">
-                                                            <button class="quantity-up"><i class="far fa-plus"></i></button>
-                                                        </div>
-                                                        <div class="cart-remove"><i class="far fa-times"></i></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <div class="product-thumb-item">
-                                                        <div class="product-img">
-                                                            <img src="assets/images/products/cart-4.jpg" alt="Product Thumbnail">
-                                                        </div>
-                                                        <div class="product-info">
-                                                            <h4 class="title"><a href="{{ url('shop-details') }}">Embroidered Square Neck Sheath Gown Red Colors</a></h4>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <div class="price"><span class="currrency">$</span> 180.00</div>
-                                                </td>
-                                                <td>
-                                                    <div class="product-stock">24 in stock</div>
-                                                </td>
-                                                <td>
-                                                    <div class="action-cart">
-                                                        <div class="quantity-input">
-                                                            <button class="quantity-down"><i class="far fa-minus"></i></button>
-                                                            <input class="quantity" type="text" value="1" name="quantity">
-                                                            <button class="quantity-up"><i class="far fa-plus"></i></button>
-                                                        </div>
-                                                        <div class="cart-remove"><i class="far fa-times"></i></div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </tbody>
+                                       <tbody>
+
+@forelse($wishlist as $item)
+
+<tr>
+
+    <td>
+        <div class="product-thumb-item">
+
+            <div class="product-img">
+                <img src="{{ asset('assets/images/products/'.$item->product->image) }}" alt="">
+            </div>
+
+            <div class="product-info">
+                <h4 class="title">
+                    <a href="{{ url('/product/'.$item->product->slug) }}">
+                        {{ $item->product->name }}
+                    </a>
+                </h4>
+            </div>
+
+        </div>
+    </td>
+
+    <td>
+
+        <div class="price">
+
+            @if($item->product->sale_price)
+
+                <span class="currency">₹</span>
+                {{ number_format($item->product->sale_price,2) }}
+
+            @else
+
+                <span class="currency">₹</span>
+                {{ number_format($item->product->price,2) }}
+
+            @endif
+
+        </div>
+
+    </td>
+
+    <td>
+
+        @if($item->product->stock > 0)
+
+            <div class="product-stock text-success">
+                In Stock
+            </div>
+
+        @else
+
+            <div class="product-stock text-danger">
+                Out Of Stock
+            </div>
+
+        @endif
+
+    </td>
+
+    <td>
+
+        <div class="action-cart">
+
+            <a href="javascript:void(0)"
+               class="theme-btn style-one moveToCart"
+               data-id="{{ $item->product_id }}">
+
+                Add To Cart
+
+            </a>
+
+          <a href="javascript:void(0)"
+   class="wishlistRemove"
+   data-id="{{ $item->id }}"
+   title="Remove from Wishlist">
+
+    <i class="fas fa-times"></i>
+
+</a>
+
+        </div>
+
+    </td>
+
+</tr>
+
+@empty
+
+<tr>
+
+    <td colspan="4" class="text-center py-5">
+
+        <h4>Your wishlist is empty.</h4>
+
+    </td>
+
+</tr>
+
+@endforelse
+
+</tbody>
                                     </table>
                                 </div>
                             </div>
