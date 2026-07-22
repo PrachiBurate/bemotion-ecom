@@ -35,6 +35,17 @@
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
 
+<!-- ERRORS -->
+@if($errors->any())
+<div class="alert alert-danger mt-2">
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <!-- ================= TABLE ================= -->
 <div class="card mt-3">
 <div class="card-body">
@@ -51,7 +62,7 @@
 </thead>
 
 <tbody>
-@foreach($offices as $o)
+@forelse($offices as $o)
 <tr>
     <td>{{ $loop->iteration }}</td>
     <td>{{ $o->title }}</td>
@@ -77,7 +88,7 @@
 
             {{-- DELETE --}}
             @if($user->hasPermission('office_locations.delete') || $user->is_admin)
-            <form action="/admin/offices/delete/{{ $o->id }}" method="POST">
+            <form action="/admin/offices/delete/{{ $o->id }}" method="POST" onsubmit="return confirm('Delete this office?');">
                 @csrf
                 <button class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -86,7 +97,11 @@
         </div>
     </td>
 </tr>
-@endforeach
+@empty
+<tr>
+    <td colspan="5" class="text-center text-muted">No office locations found.</td>
+</tr>
+@endforelse
 </tbody>
 </table>
 
@@ -111,19 +126,30 @@
 
     <div class="modal-body">
 
-        <input type="text" name="title" class="form-control mb-2" placeholder="Title" required>
+        <label class="form-label">Title</label>
+        <input type="text" name="title" class="form-control mb-2" value="{{ old('title') }}" placeholder="Title" required>
+        @error('title')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-        <textarea name="address" class="form-control mb-2" placeholder="Address" required></textarea>
+        <label class="form-label">Address</label>
+        <textarea name="address" class="form-control mb-2" placeholder="Address" required>{{ old('address') }}</textarea>
+        @error('address')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-        <input type="text" name="phone1" class="form-control mb-2" placeholder="Phone 1" required>
+        <label class="form-label">Phone 1</label>
+        <input type="text" name="phone1" class="form-control mb-2" value="{{ old('phone1') }}" placeholder="Phone 1" required>
+        @error('phone1')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-        <input type="text" name="phone2" class="form-control mb-2" placeholder="Phone 2">
+        <label class="form-label">Phone 2 (optional)</label>
+        <input type="text" name="phone2" class="form-control mb-2" value="{{ old('phone2') }}" placeholder="Phone 2">
+        @error('phone2')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-        <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control mb-2" value="{{ old('email') }}" placeholder="Email" required>
+        @error('email')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+        <label class="form-label">Status</label>
         <select name="status" class="form-control">
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
+            <option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Active</option>
+            <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
         </select>
 
     </div>
@@ -153,16 +179,22 @@
 
     <div class="modal-body">
 
+        <label class="form-label">Title</label>
         <input type="text" name="title" value="{{ $o->title }}" class="form-control mb-2" required placeholder="Title">
 
+        <label class="form-label">Address</label>
         <textarea name="address" class="form-control mb-2" required placeholder="Address">{{ $o->address }}</textarea>
 
+        <label class="form-label">Phone 1</label>
         <input type="text" name="phone1" value="{{ $o->phone1 }}" class="form-control mb-2" required placeholder="Phone 1">
 
+        <label class="form-label">Phone 2 (optional)</label>
         <input type="text" name="phone2" value="{{ $o->phone2 }}" class="form-control mb-2" placeholder="Phone 2">
 
+        <label class="form-label">Email</label>
         <input type="email" name="email" value="{{ $o->email }}" class="form-control mb-2" required placeholder="Email">
 
+        <label class="form-label">Status</label>
         <select name="status" class="form-control">
             <option value="1" {{ $o->status ? 'selected' : '' }}>Active</option>
             <option value="0" {{ !$o->status ? 'selected' : '' }}>Inactive</option>

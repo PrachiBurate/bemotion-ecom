@@ -29,7 +29,22 @@
 </div>
 
 @if(session('success'))
-<div class="alert alert-success mt-2">{{ session('success') }}</div>
+<div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+    {{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
+@if($errors->any())
+<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+    <strong>Please fix the following:</strong>
+    <ul class="mb-0 mt-1">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
 @endif
 
 <!-- TABLE -->
@@ -80,7 +95,7 @@
             @endif
 
             @if($user->hasPermission('weekly_deals.delete') || $user->is_admin)
-            <form action="/admin/weekly-deals/delete/{{ $d->id }}" method="POST">
+            <form action="/admin/weekly-deals/delete/{{ $d->id }}" method="POST" onsubmit="return confirm('Delete this deal?');">
                 @csrf
                 <button class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -103,7 +118,7 @@
 <div class="modal fade" id="addDeal">
 <div class="modal-dialog modal-lg">
 
-<form method="POST" action="/admin/weekly-deals/store" enctype="multipart/form-data">
+<form method="POST" action="/admin/weekly-deals/store" enctype="multipart/form-data" novalidate>
 @csrf
 
 <div class="modal-content">
@@ -114,18 +129,52 @@
 
     <div class="modal-body">
 
-        <input type="text" name="title" placeholder="Title" class="form-control mb-2" required>
+        <div class="mb-2">
+            <label class="form-label">Title</label>
+            <input type="text" name="title" value="{{ old('title') }}"
+                placeholder="Title" class="form-control @error('title') is-invalid @enderror" required>
+            @error('title')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
-        <input type="text" name="discount" placeholder="Discount (UP TO 80%)" class="form-control mb-2">
+        <div class="mb-2">
+            <label class="form-label">Discount</label>
+            <input type="text" name="discount" value="{{ old('discount') }}"
+                placeholder="Discount (UP TO 80%)" class="form-control @error('discount') is-invalid @enderror">
+            @error('discount')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
-        <input type="datetime-local" name="end_date" class="form-control mb-2">
+        <div class="mb-2">
+            <label class="form-label">End Date</label>
+            <input type="datetime-local" name="end_date" value="{{ old('end_date') }}"
+                class="form-control @error('end_date') is-invalid @enderror">
+            @error('end_date')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
-        <input type="file" name="image" class="form-control mb-2">
+        <div class="mb-2">
+            <label class="form-label">Image</label>
+            <input type="file" name="image" accept="image/*"
+                class="form-control @error('image') is-invalid @enderror" required>
+            @error('image')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
-        <select name="status" class="form-control">
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
-        </select>
+        <div class="mb-2">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control @error('status') is-invalid @enderror">
+                <option value="1" {{ old('status', '1') == '1' ? 'selected' : '' }}>Active</option>
+                <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
+            </select>
+            @error('status')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
 
     </div>
 
@@ -143,8 +192,11 @@
 <div class="modal fade" id="edit{{ $d->id }}">
 <div class="modal-dialog modal-lg">
 
-<form method="POST" action="/admin/weekly-deals/update/{{ $d->id }}" enctype="multipart/form-data">
+<form method="POST" action="/admin/weekly-deals/update/{{ $d->id }}" enctype="multipart/form-data" novalidate>
 @csrf
+<input type="hidden" name="_deal_id" value="{{ $d->id }}">
+
+@php $isFailedEdit = old('_deal_id') == $d->id; @endphp
 
 <div class="modal-content">
     <div class="modal-header">
@@ -154,22 +206,69 @@
 
     <div class="modal-body">
 
-        <input type="text" name="title" value="{{ $d->title }}" class="form-control mb-2">
+        <div class="mb-2">
+            <label class="form-label">Title</label>
+            <input type="text" name="title"
+                value="{{ $isFailedEdit ? old('title') : $d->title }}"
+                class="form-control @if($isFailedEdit) @error('title') is-invalid @enderror @endif">
+            @if($isFailedEdit)
+                @error('title')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            @endif
+        </div>
 
-        <input type="text" name="discount" value="{{ $d->discount }}" class="form-control mb-2">
+        <div class="mb-2">
+            <label class="form-label">Discount</label>
+            <input type="text" name="discount"
+                value="{{ $isFailedEdit ? old('discount') : $d->discount }}"
+                class="form-control @if($isFailedEdit) @error('discount') is-invalid @enderror @endif">
+            @if($isFailedEdit)
+                @error('discount')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            @endif
+        </div>
 
-        <input type="datetime-local" name="end_date" value="{{ $d->end_date }}" class="form-control mb-2">
+        <div class="mb-2">
+            <label class="form-label">End Date</label>
+            <input type="datetime-local" name="end_date"
+                value="{{ $isFailedEdit ? old('end_date') : $d->end_date }}"
+                class="form-control @if($isFailedEdit) @error('end_date') is-invalid @enderror @endif">
+            @if($isFailedEdit)
+                @error('end_date')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            @endif
+        </div>
 
-        <input type="file" name="image" class="form-control mb-2">
+        <div class="mb-2">
+            <label class="form-label">Image (leave blank to keep current)</label>
+            <input type="file" name="image" accept="image/*"
+                class="form-control @if($isFailedEdit) @error('image') is-invalid @enderror @endif">
+            @if($isFailedEdit)
+                @error('image')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            @endif
+        </div>
 
         @if($d->image)
-        <img src="{{ asset('assets/images/banner/'.$d->image) }}" width="80">
+        <img src="{{ asset('assets/images/banner/'.$d->image) }}" width="80" class="mb-2 d-block">
         @endif
 
-        <select name="status" class="form-control">
-            <option value="1" {{ $d->status ? 'selected' : '' }}>Active</option>
-            <option value="0" {{ !$d->status ? 'selected' : '' }}>Inactive</option>
-        </select>
+        <div class="mb-2">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control @if($isFailedEdit) @error('status') is-invalid @enderror @endif">
+                <option value="1" {{ ($isFailedEdit ? old('status') : $d->status) == '1' ? 'selected' : '' }}>Active</option>
+                <option value="0" {{ ($isFailedEdit ? old('status') : $d->status) == '0' ? 'selected' : '' }}>Inactive</option>
+            </select>
+            @if($isFailedEdit)
+                @error('status')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            @endif
+        </div>
 
     </div>
 
@@ -183,5 +282,18 @@
 </div>
 </div>
 @endforeach
+
+@if ($errors->any())
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var dealId = @json(old('_deal_id'));
+    var modalId = dealId ? 'edit' + dealId : 'addDeal';
+    var modalEl = document.getElementById(modalId);
+    if (modalEl) {
+        new bootstrap.Modal(modalEl).show();
+    }
+});
+</script>
+@endif
 
 @endsection

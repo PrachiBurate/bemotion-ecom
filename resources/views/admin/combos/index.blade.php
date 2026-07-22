@@ -1,16 +1,5 @@
 {{-- 
 resources/views/admin/combos/index.blade.php
-
-NOTE:
-The complete production Blade file (listing, add/edit modals, dynamic JS, etc.)
-is too large for a single ChatGPT response. This scaffold is generated as a file
-and can be extended.
-
-This file includes:
-- Combo listing
-- Add Combo modal
-- Product repeater
-- Bootstrap structure
 --}}
 @extends('admin.layouts.app')
 
@@ -38,6 +27,16 @@ This file includes:
 </div>
 @endif
 
+@if($errors->any())
+<div class="alert alert-danger mt-3">
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <div class="card mt-3">
 <div class="card-body">
 
@@ -57,7 +56,7 @@ This file includes:
 
 <tbody>
 
-@foreach($combos as $combo)
+@forelse($combos as $combo)
 
 <tr>
 
@@ -74,14 +73,14 @@ This file includes:
 <td>
 @foreach($combo->items as $item)
 <div>
-{{ $item->product->name ?? '' }}
+{{ $item->product->name ?? '—' }}
 (x{{ $item->quantity }})
 </div>
 @endforeach
 </td>
 
-<td>₹{{ $combo->price }}</td>
-<td>₹{{ $combo->offer_price }}</td>
+<td>₹{{ number_format($combo->price, 2) }}</td>
+<td>{{ $combo->offer_price !== null ? '₹'.number_format($combo->offer_price, 2) : '—' }}</td>
 
 <td>
 <span class="badge {{ $combo->status ? 'bg-success':'bg-danger' }}">
@@ -101,7 +100,8 @@ This file includes:
   @if($user->hasPermission('combos.delete') || $user->is_admin)
 <form action="/admin/combos/delete/{{ $combo->id }}"
 method="POST"
-class="d-inline">
+class="d-inline"
+onsubmit="return confirm('Delete this combo?');">
 
 @csrf
 
@@ -115,7 +115,11 @@ Delete
 
 </tr>
 
-@endforeach
+@empty
+<tr>
+    <td colspan="8" class="text-center text-muted">No combos found.</td>
+</tr>
+@endforelse
 
 </tbody>
 
@@ -148,42 +152,64 @@ data-bs-dismiss="modal"></button>
 
 <div class="modal-body">
 
+<label class="form-label">Combo Name</label>
 <input type="text"
 name="name"
-class="form-control mb-3"
+class="form-control mb-1"
+value="{{ old('name') }}"
 placeholder="Combo Name">
+@error('name')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+<label class="form-label">Description</label>
 <textarea
 name="description"
 class="form-control mb-3"
-placeholder="Description"></textarea>
+placeholder="Description">{{ old('description') }}</textarea>
 
+<div class="row">
+<div class="col-md-6">
+<label class="form-label">Price</label>
 <input type="number"
+step="0.01" min="0"
 name="price"
-class="form-control mb-3"
+class="form-control mb-1"
+value="{{ old('price') }}"
 placeholder="Price">
-
+@error('price')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+</div>
+<div class="col-md-6">
+<label class="form-label">Offer Price (optional)</label>
 <input type="number"
+step="0.01" min="0"
 name="offer_price"
-class="form-control mb-3"
+class="form-control mb-1"
+value="{{ old('offer_price') }}"
 placeholder="Offer Price">
+@error('offer_price')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+</div>
+</div>
 
+<label class="form-label">Image (optional)</label>
 <input type="file"
 name="image"
-class="form-control mb-3">
+class="form-control mb-1"
+accept="image/png,image/jpeg,image/jpg,image/webp">
+@error('image')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+<label class="form-label">Status</label>
 <select
 name="status"
 class="form-control mb-3">
 
-<option value="1">Active</option>
-<option value="0">Inactive</option>
+<option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Active</option>
+<option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
 
 </select>
 
 <hr>
 
 <h5>Products</h5>
+@error('products')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
 <div id="productRows">
 
@@ -213,6 +239,7 @@ class="form-control">
 
 <input
 type="number"
+min="1"
 name="products[0][quantity]"
 class="form-control"
 value="1">
@@ -283,6 +310,7 @@ Save Combo
 
 <div class="modal-body">
 
+<label class="form-label">Combo Name</label>
 <input
 type="text"
 name="name"
@@ -290,29 +318,42 @@ value="{{ $combo->name }}"
 class="form-control mb-3"
 placeholder="Combo Name">
 
+<label class="form-label">Description</label>
 <textarea
 name="description"
 class="form-control mb-3"
 placeholder="Description">{{ $combo->description }}</textarea>
 
+<div class="row">
+<div class="col-md-6">
+<label class="form-label">Price</label>
 <input
 type="number"
+step="0.01" min="0"
 name="price"
 value="{{ $combo->price }}"
 class="form-control mb-3"
 placeholder="Price">
-
+</div>
+<div class="col-md-6">
+<label class="form-label">Offer Price (optional)</label>
 <input
 type="number"
+step="0.01" min="0"
 name="offer_price"
 value="{{ $combo->offer_price }}"
 class="form-control mb-3"
 placeholder="Offer Price">
+</div>
+</div>
 
+<label class="form-label">Image (optional)</label>
 <input
 type="file"
 name="image"
-class="form-control mb-3">
+class="form-control mb-1"
+accept="image/png,image/jpeg,image/jpg,image/webp">
+<small class="text-muted d-block mb-3">Leave empty to keep the current image.</small>
 
 @if($combo->image)
 
@@ -323,6 +364,7 @@ class="mb-3">
 
 @endif
 
+<label class="form-label">Status</label>
 <select
 name="status"
 class="form-control mb-3">
@@ -377,6 +419,7 @@ value="{{ $product->id }}"
 
 <input
 type="number"
+min="1"
 class="form-control"
 name="products[{{ $i }}][quantity]"
 value="{{ $item->quantity }}">
@@ -430,7 +473,11 @@ Update Combo
 </div>
 
 @endforeach
-@section('scripts')
+
+</div>
+@endsection
+
+@push('scripts')
 
 <script>
 
@@ -464,6 +511,7 @@ class="form-control">
 
 <input
 type="number"
+min="1"
 name="products[${index}][quantity]"
 class="form-control"
 value="1">
@@ -510,8 +558,6 @@ const products = @json(
     })->values()
 );
 
-// EDIT MODAL
-
 document.addEventListener("click", function(e){
 
     if(e.target.classList.contains("addEditProduct")){
@@ -555,6 +601,7 @@ document.addEventListener("click", function(e){
 
                 <input
                 type="number"
+                min="1"
                 name="products[${index}][quantity]"
                 class="form-control"
                 value="1">
@@ -585,5 +632,4 @@ document.addEventListener("click", function(e){
 
 });
 </script>
-@endsection
-@endsection
+@endpush

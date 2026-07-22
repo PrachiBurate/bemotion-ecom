@@ -25,14 +25,50 @@ class UserController extends Controller
     // 🔥 CREATE USER
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'username' => 'required|unique:users,username',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            'role_id' => 'required'
-        ]);
+      $request->validate([
+    'name' => [
+        'required',
+        'string',
+        'min:3',
+        'max:100',
+        'regex:/^[A-Za-z\s]+$/'
+    ],
 
+    'username' => [
+        'required',
+        'string',
+        'min:4',
+        'max:30',
+        'alpha_dash',
+        'unique:users,username'
+    ],
+
+    'email' => [
+        'required',
+        'email:rfc,dns',
+        'max:255',
+        'unique:users,email'
+    ],
+
+    'password' => [
+        'required',
+        'string',
+        'min:8',
+        'max:20',
+        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).+$/'
+    ],
+
+    'role_id' => [
+        'required',
+        'exists:roles,id'
+    ]
+],[
+    'name.regex' => 'Name should contain only letters and spaces.',
+
+    'username.alpha_dash' => 'Username can contain only letters, numbers, dashes and underscores.',
+
+    'password.regex' => 'Password must contain uppercase, lowercase, number and special character.'
+]);
         User::create([
             'name' => $request->name,
             'username' => strtolower($request->username),
@@ -56,13 +92,44 @@ class UserController extends Controller
             return back()->with('error', 'Cannot edit admin');
         }
 
-        $request->validate([
-            'name' => 'required',
-            'username' => 'required|unique:users,username,'.$id,
-            'email' => 'required|email|unique:users,email,'.$id,
-            'role_id' => 'required',
-            'password' => 'nullable|min:6' // 🔥 important
-        ]);
+      $request->validate([
+    'name' => [
+        'required',
+        'string',
+        'min:3',
+        'max:100',
+        'regex:/^[A-Za-z\s]+$/'
+    ],
+
+    'username' => [
+        'required',
+        'string',
+        'min:4',
+        'max:30',
+        'alpha_dash',
+        'unique:users,username,'.$id
+    ],
+
+    'email' => [
+        'required',
+        'email:rfc,dns',
+        'max:255',
+        'unique:users,email,'.$id
+    ],
+
+    'role_id' => [
+        'required',
+        'exists:roles,id'
+    ],
+
+    'password' => [
+        'nullable',
+        'string',
+        'min:8',
+        'max:20',
+        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).+$/'
+    ]
+]);
 
         $data = [
             'name' => $request->name,

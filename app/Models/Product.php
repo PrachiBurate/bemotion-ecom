@@ -34,4 +34,14 @@ class Product extends Model
     public function brand(){
         return $this->belongsTo(Brand::class);
     }
+    // app/Models/Product.php — add these relationships
+public function images()
+{
+    return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+}
+
+public function specifications()
+{
+    return $this->hasMany(ProductSpecification::class)->orderBy('sort_order');
+}
 }

@@ -2,7 +2,26 @@
 
 @section('content')
 
-@php $user = auth()->user(); @endphp
+@php
+    $user = auth()->user();
+
+    // Common Font Awesome (solid) icons — extend this list as needed.
+    // Must match the pattern fa-xxxx used by the validation regex in the controller.
+    $availableIcons = [
+        'fa-search', 'fa-credit-card', 'fa-box', 'fa-truck', 'fa-shopping-cart', 'fa-user',
+        'fa-check', 'fa-check-circle', 'fa-clock', 'fa-calendar', 'fa-calendar-check',
+        'fa-envelope', 'fa-phone', 'fa-map-marker-alt', 'fa-home', 'fa-building',
+        'fa-cog', 'fa-cogs', 'fa-wrench', 'fa-tools', 'fa-clipboard-list', 'fa-clipboard-check',
+        'fa-file', 'fa-file-alt', 'fa-file-invoice', 'fa-file-signature', 'fa-signature',
+        'fa-shield-alt', 'fa-lock', 'fa-unlock', 'fa-key', 'fa-star', 'fa-heart',
+        'fa-thumbs-up', 'fa-comments', 'fa-comment-dots', 'fa-headset', 'fa-handshake',
+        'fa-money-bill-wave', 'fa-wallet', 'fa-receipt', 'fa-chart-line', 'fa-chart-bar',
+        'fa-users', 'fa-user-check', 'fa-user-plus', 'fa-gift', 'fa-boxes', 'fa-warehouse',
+        'fa-shipping-fast', 'fa-plane', 'fa-globe', 'fa-link', 'fa-download', 'fa-upload',
+        'fa-search-plus', 'fa-clipboard', 'fa-pen', 'fa-edit', 'fa-flag-checkered',
+        'fa-rocket', 'fa-bell', 'fa-eye', 'fa-thumbtack',
+    ];
+@endphp
 
 <main class="nxl-container">
 <div class="nxl-content">
@@ -21,7 +40,22 @@
 </div>
 
 @if(session('success'))
-<div class="alert alert-success mt-2">{{ session('success') }}</div>
+<div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+    {{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
+@if($errors->any())
+<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+    <strong>Please fix the following:</strong>
+    <ul class="mb-0 mt-1">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
 @endif
 
 <!-- TABLE -->
@@ -71,7 +105,7 @@
             @endif
 
             @if($user->hasPermission('process_steps.delete') || $user->is_admin)
-            <form action="/admin/process-steps/delete/{{ $s->id }}" method="POST">
+            <form action="/admin/process-steps/delete/{{ $s->id }}" method="POST" onsubmit="return confirm('Delete this step?');">
                 @csrf
                 <button class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -94,7 +128,7 @@
 <div class="modal fade" id="addStep">
 <div class="modal-dialog modal-lg">
 
-<form method="POST" action="/admin/process-steps/store">
+<form method="POST" action="/admin/process-steps/store" novalidate>
 @csrf
 
 <div class="modal-content">
@@ -105,28 +139,66 @@
 
 <div class="modal-body">
 
-<input type="text" name="title" class="form-control mb-2" placeholder="Title" required>
-
-<textarea name="description" class="form-control mb-2" placeholder="Description"></textarea>
-
-{{-- ICON PICKER --}}
-<input type="hidden" name="icon" value="fa-search" class="icon-input">
-
-<div class="icon-box mb-3">
-    <i class="fas fa-search icon-item active"></i>
-    <i class="fas fa-credit-card icon-item"></i>
-    <i class="fas fa-box icon-item"></i>
-    <i class="fas fa-truck icon-item"></i>
-    <i class="fas fa-shopping-cart icon-item"></i>
-    <i class="fas fa-user icon-item"></i>
+<div class="mb-2">
+    <label class="form-label">Title</label>
+    <input type="text" name="title" value="{{ old('title') }}"
+        class="form-control @error('title') is-invalid @enderror"
+        placeholder="Title" required>
+    @error('title')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
 </div>
 
-<input type="number" name="step_number" class="form-control mb-2" placeholder="Step Number">
+<div class="mb-2">
+    <label class="form-label">Description</label>
+    <textarea name="description"
+        class="form-control @error('description') is-invalid @enderror"
+        placeholder="Description">{{ old('description') }}</textarea>
+    @error('description')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
 
-<select name="status" class="form-control">
-    <option value="1">Active</option>
-    <option value="0">Inactive</option>
-</select>
+{{-- ICON PICKER --}}
+<div class="mb-2">
+    <label class="form-label">Icon</label>
+
+    <input type="text" class="form-control mb-2 icon-search" placeholder="Search icons...">
+
+    <input type="hidden" name="icon" value="{{ old('icon', 'fa-search') }}" class="icon-input @error('icon') is-invalid @enderror">
+
+    <div class="icon-box mb-1">
+        @foreach($availableIcons as $icon)
+        <i class="fas {{ $icon }} icon-item {{ old('icon', 'fa-search') == $icon ? 'active' : '' }}"
+           data-icon="{{ $icon }}" title="{{ $icon }}"></i>
+        @endforeach
+    </div>
+
+    @error('icon')
+        <div class="text-danger small">{{ $message }}</div>
+    @enderror
+</div>
+
+<div class="mb-2">
+    <label class="form-label">Step Number</label>
+    <input type="number" name="step_number" value="{{ old('step_number') }}"
+        class="form-control @error('step_number') is-invalid @enderror"
+        placeholder="Step Number">
+    @error('step_number')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
+
+<div class="mb-2">
+    <label class="form-label">Status</label>
+    <select name="status" class="form-control @error('status') is-invalid @enderror">
+        <option value="1" {{ old('status', '1') == '1' ? 'selected' : '' }}>Active</option>
+        <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
+    </select>
+    @error('status')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
 
 </div>
 
@@ -144,8 +216,11 @@
 <div class="modal fade" id="edit{{ $s->id }}">
 <div class="modal-dialog modal-lg">
 
-<form method="POST" action="/admin/process-steps/update/{{ $s->id }}">
+<form method="POST" action="/admin/process-steps/update/{{ $s->id }}" novalidate>
 @csrf
+<input type="hidden" name="_step_id" value="{{ $s->id }}">
+
+@php $isFailedEdit = old('_step_id') == $s->id; @endphp
 
 <div class="modal-content">
 
@@ -156,29 +231,78 @@
 
 <div class="modal-body">
 
-<input type="text" name="title" value="{{ $s->title }}" class="form-control mb-2">
-
-<textarea name="description" class="form-control mb-2">{{ $s->description }}</textarea>
-
-{{-- ICON PICKER --}}
-<input type="hidden" name="icon" value="{{ $s->icon }}" class="icon-input">
-
-@php
-$icons = ['fa-search','fa-credit-card','fa-box','fa-truck','fa-shopping-cart','fa-user'];
-@endphp
-
-<div class="icon-box mb-3">
-@foreach($icons as $icon)
-    <i class="fas {{ $icon }} icon-item {{ $s->icon == $icon ? 'active' : '' }}"></i>
-@endforeach
+<div class="mb-2">
+    <label class="form-label">Title</label>
+    <input type="text" name="title"
+        value="{{ $isFailedEdit ? old('title') : $s->title }}"
+        class="form-control @if($isFailedEdit) @error('title') is-invalid @enderror @endif">
+    @if($isFailedEdit)
+        @error('title')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    @endif
 </div>
 
-<input type="number" name="step_number" value="{{ $s->step_number }}" class="form-control mb-2">
+<div class="mb-2">
+    <label class="form-label">Description</label>
+    <textarea name="description"
+        class="form-control @if($isFailedEdit) @error('description') is-invalid @enderror @endif">{{ $isFailedEdit ? old('description') : $s->description }}</textarea>
+    @if($isFailedEdit)
+        @error('description')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    @endif
+</div>
 
-<select name="status" class="form-control">
-    <option value="1" {{ $s->status ? 'selected' : '' }}>Active</option>
-    <option value="0" {{ !$s->status ? 'selected' : '' }}>Inactive</option>
-</select>
+{{-- ICON PICKER --}}
+@php $currentIcon = $isFailedEdit ? old('icon') : $s->icon; @endphp
+
+<div class="mb-2">
+    <label class="form-label">Icon</label>
+
+    <input type="text" class="form-control mb-2 icon-search" placeholder="Search icons...">
+
+    <input type="hidden" name="icon" value="{{ $currentIcon }}"
+        class="icon-input @if($isFailedEdit) @error('icon') is-invalid @enderror @endif">
+
+    <div class="icon-box mb-1">
+        @foreach($availableIcons as $icon)
+        <i class="fas {{ $icon }} icon-item {{ $currentIcon == $icon ? 'active' : '' }}"
+           data-icon="{{ $icon }}" title="{{ $icon }}"></i>
+        @endforeach
+    </div>
+
+    @if($isFailedEdit)
+        @error('icon')
+            <div class="text-danger small">{{ $message }}</div>
+        @enderror
+    @endif
+</div>
+
+<div class="mb-2">
+    <label class="form-label">Step Number</label>
+    <input type="number" name="step_number"
+        value="{{ $isFailedEdit ? old('step_number') : $s->step_number }}"
+        class="form-control @if($isFailedEdit) @error('step_number') is-invalid @enderror @endif">
+    @if($isFailedEdit)
+        @error('step_number')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    @endif
+</div>
+
+<div class="mb-2">
+    <label class="form-label">Status</label>
+    <select name="status" class="form-control @if($isFailedEdit) @error('status') is-invalid @enderror @endif">
+        <option value="1" {{ ($isFailedEdit ? old('status') : $s->status) == '1' ? 'selected' : '' }}>Active</option>
+        <option value="0" {{ ($isFailedEdit ? old('status') : $s->status) == '0' ? 'selected' : '' }}>Inactive</option>
+    </select>
+    @if($isFailedEdit)
+        @error('status')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    @endif
+</div>
 
 </div>
 
@@ -193,6 +317,19 @@ $icons = ['fa-search','fa-credit-card','fa-box','fa-truck','fa-shopping-cart','f
 </div>
 @endforeach
 
+@if ($errors->any())
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var stepId = @json(old('_step_id'));
+    var modalId = stepId ? 'edit' + stepId : 'addStep';
+    var modalEl = document.getElementById(modalId);
+    if (modalEl) {
+        new bootstrap.Modal(modalEl).show();
+    }
+});
+</script>
+@endif
+
 @endsection
 
 {{-- ================= CSS ================= --}}
@@ -201,11 +338,20 @@ $icons = ['fa-search','fa-credit-card','fa-box','fa-truck','fa-shopping-cart','f
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #eee;
+    border-radius: 6px;
 }
 
 .icon-item {
-    font-size: 20px;
-    padding: 10px;
+    font-size: 18px;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #ddd;
     border-radius: 6px;
     cursor: pointer;
@@ -219,32 +365,42 @@ $icons = ['fa-search','fa-credit-card','fa-box','fa-truck','fa-shopping-cart','f
 .icon-item.active {
     background: #198754;
     color: #fff;
+    border-color: #198754;
+}
+
+.icon-item.d-none-search {
+    display: none;
 }
 </style>
 
 {{-- ================= JS ================= --}}
 <script>
+// Icon selection
 document.addEventListener("click", function(e) {
-
     if (e.target.classList.contains("icon-item")) {
+        var parent = e.target.closest(".modal-body");
 
-        let parent = e.target.closest(".modal-body");
-
-        // remove active from all icons
         parent.querySelectorAll(".icon-item").forEach(function(el) {
             el.classList.remove("active");
         });
 
-        // add active to clicked
         e.target.classList.add("active");
 
-        // get icon class (fa-xxxx)
-        let classes = e.target.className.split(" ");
-        let icon = classes.find(c => c.startsWith("fa-") && c !== "fa");
-
-        // set hidden input value
+        var icon = e.target.getAttribute("data-icon");
         parent.querySelector(".icon-input").value = icon;
     }
+});
 
+// Icon search filter (scoped per modal so Add and each Edit modal filter independently)
+document.addEventListener("input", function(e) {
+    if (e.target.classList.contains("icon-search")) {
+        var term = e.target.value.trim().toLowerCase();
+        var modalBody = e.target.closest(".modal-body");
+
+        modalBody.querySelectorAll(".icon-item").forEach(function(el) {
+            var name = el.getAttribute("data-icon").toLowerCase();
+            el.style.display = name.includes(term) ? "" : "none";
+        });
+    }
 });
 </script>

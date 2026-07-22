@@ -9,7 +9,7 @@
 
 <!-- HEADER -->
 <div class="page-header d-flex justify-content-between align-items-center">
-    
+
     <div class="page-header-left d-flex align-items-center">
         <div class="page-header-title">
             <h5 class="m-b-10">Pages Management</h5>
@@ -25,6 +25,17 @@
 
 @if(session('success'))
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
+@endif
+
+@if($errors->any())
+<div class="alert alert-danger mt-2">
+    <strong>Update failed:</strong>
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
 @endif
 
 <!-- TABLE -->
@@ -97,18 +108,22 @@
 
     <div class="modal-body">
 
-        <input type="text" name="title" value="{{ $p->title }}" class="form-control mb-2" required>
+        <label>Title</label>
+        <input type="text" name="title" value="{{ old('title', $p->title) }}" class="form-control mb-2" required>
 
         {{-- 🔒 SLUG READONLY --}}
+        <label>Slug</label>
         <input type="text" name="slug" value="{{ $p->slug }}" class="form-control mb-2" readonly>
 
- <textarea name="content"
-    id="editor{{ $p->id }}"
-    class="form-control">{{ old('content', $p->content) }}</textarea>
+        <label>Content</label>
+        <textarea name="content"
+            id="editor{{ $p->id }}"
+            class="form-control">{{ old('content', $p->content) }}</textarea>
 
+        <label class="mt-2">Status</label>
         <select name="status" class="form-control">
-            <option value="1" {{ $p->status ? 'selected' : '' }}>Active</option>
-            <option value="0" {{ !$p->status ? 'selected' : '' }}>Inactive</option>
+            <option value="1" {{ old('status', $p->status) == 1 ? 'selected' : '' }}>Active</option>
+            <option value="0" {{ old('status', $p->status) == 0 ? 'selected' : '' }}>Inactive</option>
         </select>
 
     </div>

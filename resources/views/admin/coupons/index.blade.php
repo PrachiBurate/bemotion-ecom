@@ -37,6 +37,17 @@
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
 
+<!-- ERRORS -->
+@if($errors->any())
+<div class="alert alert-danger mt-2">
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <!-- ================= TABLE ================= -->
 <div class="card mt-3">
 <div class="card-body">
@@ -56,14 +67,14 @@
 </thead>
 
 <tbody>
-@foreach($coupons as $c)
+@forelse($coupons as $c)
 <tr>
 <td>{{ $loop->iteration }}</td>
 <td>{{ $c->code }}</td>
 <td>{{ $c->description }}</td>
 <td>{{ ucfirst($c->type) }}</td>
-<td>{{ $c->value }}</td>
-<td>{{ $c->min_amount }}</td>
+<td>{{ $c->type == 'percent' ? $c->value.'%' : '₹'.number_format($c->value, 2) }}</td>
+<td>{{ $c->min_amount !== null ? '₹'.number_format($c->min_amount, 2) : '—' }}</td>
 
 <td>
 <span class="badge {{ $c->status ? 'bg-success' : 'bg-danger' }}">
@@ -95,7 +106,7 @@
 
 {{-- DELETE --}}
 @if($user->hasPermission('coupons.delete') || $user->is_admin)
-<form method="POST" action="/admin/coupons/delete/{{ $c->id }}">
+<form method="POST" action="/admin/coupons/delete/{{ $c->id }}" onsubmit="return confirm('Delete this coupon?');">
 @csrf
 <button class="btn btn-sm btn-dark">Delete</button>
 </form>
@@ -105,7 +116,11 @@
 </td>
 
 </tr>
-@endforeach
+@empty
+<tr>
+    <td colspan="8" class="text-center text-muted">No coupons found.</td>
+</tr>
+@endforelse
 </tbody>
 
 </table>
@@ -131,22 +146,33 @@
 
 <div class="modal-body">
 
-<input type="text" name="code" class="form-control mb-2" placeholder="Code" required>
+<label class="form-label">Code</label>
+<input type="text" name="code" class="form-control mb-1" placeholder="Code" value="{{ old('code') }}" required style="text-transform:uppercase">
+@error('code')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-<input type="text" name="description" class="form-control mb-2" placeholder="Description">
+<label class="form-label">Description</label>
+<input type="text" name="description" class="form-control mb-2" placeholder="Description" value="{{ old('description') }}">
+@error('description')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-<select name="type" class="form-control mb-2">
-<option value="flat">Flat</option>
-<option value="percent">Percent</option>
+<label class="form-label">Type</label>
+<select name="type" id="type-add" class="form-control mb-2">
+<option value="flat" {{ old('type') == 'flat' ? 'selected' : '' }}>Flat</option>
+<option value="percent" {{ old('type') == 'percent' ? 'selected' : '' }}>Percent</option>
 </select>
 
-<input type="number" name="value" class="form-control mb-2" placeholder="Value" required>
+<label class="form-label" id="valueLabel-add">Value</label>
+<input type="number" step="0.01" min="0" name="value" class="form-control mb-1" placeholder="Value" value="{{ old('value') }}" required>
+<small class="text-muted d-block mb-1" id="valueHint-add">Enter a flat amount (₹)</small>
+@error('value')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-<input type="number" name="min_amount" class="form-control mb-2" placeholder="Min Amount">
+<label class="form-label">Minimum Order Amount (optional)</label>
+<input type="number" step="0.01" min="0" name="min_amount" class="form-control mb-1" placeholder="Min Amount" value="{{ old('min_amount') }}">
+@error('min_amount')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+<label class="form-label">Status</label>
 <select name="status" class="form-control">
-<option value="1">Active</option>
-<option value="0">Inactive</option>
+<option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Active</option>
+<option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
 </select>
 
 </div>
@@ -177,19 +203,28 @@
 
 <div class="modal-body">
 
-<input type="text" name="code" value="{{ $c->code }}" class="form-control mb-2" required>
+<label class="form-label">Code</label>
+<input type="text" name="code" value="{{ $c->code }}" class="form-control mb-2" required style="text-transform:uppercase">
 
+<label class="form-label">Description</label>
 <input type="text" name="description" value="{{ $c->description }}" class="form-control mb-2">
 
-<select name="type" class="form-control mb-2">
+<label class="form-label">Type</label>
+<select name="type" id="type-edit{{ $c->id }}" class="form-control mb-2">
 <option value="flat" {{ $c->type=='flat'?'selected':'' }}>Flat</option>
 <option value="percent" {{ $c->type=='percent'?'selected':'' }}>Percent</option>
 </select>
 
-<input type="number" name="value" value="{{ $c->value }}" class="form-control mb-2">
+<label class="form-label" id="valueLabel-edit{{ $c->id }}">Value</label>
+<input type="number" step="0.01" min="0" name="value" value="{{ $c->value }}" class="form-control mb-1" required>
+<small class="text-muted d-block mb-1" id="valueHint-edit{{ $c->id }}">
+    {{ $c->type == 'percent' ? 'Enter a percentage (0–100)' : 'Enter a flat amount (₹)' }}
+</small>
 
-<input type="number" name="min_amount" value="{{ $c->min_amount }}" class="form-control mb-2">
+<label class="form-label">Minimum Order Amount (optional)</label>
+<input type="number" step="0.01" min="0" name="min_amount" value="{{ $c->min_amount }}" class="form-control mb-2">
 
+<label class="form-label">Status</label>
 <select name="status" class="form-control">
 <option value="1" {{ $c->status ? 'selected':'' }}>Active</option>
 <option value="0" {{ !$c->status ? 'selected':'' }}>Inactive</option>
@@ -207,5 +242,39 @@
 </div>
 </div>
 @endforeach
+
+<script>
+// UX-only: swap the value hint/max based on coupon type. Server-side
+// validation (percent capped at 100) is what actually enforces this.
+function bindCouponTypeHint(selectId, inputId, hintId, labelId) {
+    const select = document.getElementById(selectId);
+    const input = document.getElementById(inputId);
+    const hint = document.getElementById(hintId);
+
+    if (!select) return;
+
+    function update() {
+        if (select.value === 'percent') {
+            hint.textContent = 'Enter a percentage (0–100)';
+            input.setAttribute('max', '100');
+        } else {
+            hint.textContent = 'Enter a flat amount (₹)';
+            input.removeAttribute('max');
+        }
+    }
+
+    select.addEventListener('change', update);
+    update();
+}
+
+bindCouponTypeHint('type-add', 'addCoupon input[name="value"]', 'valueHint-add', 'valueLabel-add');
+document.querySelector('#addCoupon input[name="value"]').id = 'value-add';
+bindCouponTypeHint('type-add', 'value-add', 'valueHint-add', 'valueLabel-add');
+
+@foreach($coupons as $c)
+document.querySelector('#edit{{ $c->id }} input[name="value"]').id = 'value-edit{{ $c->id }}';
+bindCouponTypeHint('type-edit{{ $c->id }}', 'value-edit{{ $c->id }}', 'valueHint-edit{{ $c->id }}', 'valueLabel-edit{{ $c->id }}');
+@endforeach
+</script>
 
 @endsection

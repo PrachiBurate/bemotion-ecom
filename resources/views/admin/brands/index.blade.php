@@ -32,6 +32,16 @@
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
 
+@if($errors->any())
+<div class="alert alert-danger mt-2">
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <!-- TABLE -->
 <div class="card mt-3">
 <div class="card-body">
@@ -48,7 +58,7 @@
 </thead>
 
 <tbody>
-@foreach($brands as $b)
+@forelse($brands as $b)
 <tr>
     <td>{{ $loop->iteration }}</td>
 
@@ -80,7 +90,7 @@
 
             {{-- DELETE --}}
             @if($user->hasPermission('brands.delete') || $user->is_admin)
-            <form action="/admin/brands/delete/{{ $b->id }}" method="POST">
+            <form action="/admin/brands/delete/{{ $b->id }}" method="POST" onsubmit="return confirm('Delete this brand?');">
                 @csrf
                 <button class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -89,7 +99,11 @@
         </div>
     </td>
 </tr>
-@endforeach
+@empty
+<tr>
+    <td colspan="5" class="text-center text-muted">No brands found.</td>
+</tr>
+@endforelse
 </tbody>
 </table>
 
@@ -114,13 +128,19 @@
 
     <div class="modal-body">
 
-        <input type="text" name="name" placeholder="Brand Name" class="form-control mb-2" required>
+        <label class="form-label">Name</label>
+        <input type="text" name="name" placeholder="Brand Name" class="form-control mb-2" value="{{ old('name') }}" required>
+        @error('name')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-        <input type="file" name="logo" class="form-control mb-2">
+        <label class="form-label">Logo (optional)</label>
+        <input type="file" name="logo" class="form-control mb-2" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml">
+        <small class="text-muted d-block mb-2">JPG, PNG, WEBP or SVG. Max 2MB.</small>
+        @error('logo')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+        <label class="form-label">Status</label>
         <select name="status" class="form-control">
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
+            <option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Active</option>
+            <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
         </select>
 
     </div>
@@ -151,14 +171,18 @@
 
     <div class="modal-body">
 
+        <label class="form-label">Name</label>
         <input type="text" name="name" value="{{ $b->name }}" class="form-control mb-2" required>
 
-        <input type="file" name="logo" class="form-control mb-2">
+        <label class="form-label">Logo (optional)</label>
+        <input type="file" name="logo" class="form-control mb-2" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml">
+        <small class="text-muted d-block mb-2">Leave empty to keep the current logo. Max 2MB.</small>
 
         @if($b->logo)
-        <img src="{{ asset('assets/images/brands/'.$b->logo) }}" width="80" class="mb-2">
+        <img src="{{ asset('assets/images/brands/'.$b->logo) }}" width="80" class="mb-2 d-block">
         @endif
 
+        <label class="form-label">Status</label>
         <select name="status" class="form-control">
             <option value="1" {{ $b->status ? 'selected' : '' }}>Active</option>
             <option value="0" {{ !$b->status ? 'selected' : '' }}>Inactive</option>

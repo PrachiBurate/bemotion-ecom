@@ -29,10 +29,22 @@
 
 </div>
 
+
 @if(session('success'))
-<div class="alert alert-success mt-2">{{ session('success') }}</div>
+<div class="alert alert-success mt-2">
+    {{ session('success') }}
+</div>
 @endif
 
+@if($errors->any())
+<div class="alert alert-danger mt-2">
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
 <!-- TABLE -->
 <div class="card mt-3">
 <div class="card-body">
@@ -82,7 +94,11 @@
 @if($user->hasPermission('blogs.delete') || $user->is_admin)
 <form action="/blogs/delete/{{ $blog->id }}" method="POST">
 @csrf
-<button class="btn btn-danger btn-sm">Delete</button>
+<button
+class="btn btn-danger btn-sm"
+onclick="return confirm('Are you sure you want to delete this blog?')">
+Delete
+</button>
 </form>
 @endif
 
@@ -116,16 +132,59 @@
 
 <div class="modal-body">
 
-<input type="text" name="title" placeholder="Title" class="form-control mb-2" required>
+<input
+type="text"
+name="title"
+class="form-control mb-2"
+placeholder="Blog Title"
+required
+minlength="5"
+maxlength="255"
+pattern="^(?! )[A-Za-z0-9\s&(),.'\-]+$"
+title="Minimum 5 characters. Special characters are limited."
+autocomplete="off">
+
+<div class="invalid-feedback">
+Please enter a valid blog title.
+</div>
 
 <textarea name="content" id="addEditor" class="form-control"></textarea>
 
-<input type="file" name="image" class="form-control mb-2" required>
+<small class="text-danger d-none" id="contentError">
+Blog content is required.
+</small>
 
-<select name="status" class="form-control">
+<input
+type="file"
+name="image"
+id="blogImage"
+class="form-control mb-2"
+accept=".jpg,.jpeg,.png,.webp"
+required>
+
+<div class="invalid-feedback">
+Upload JPG, PNG or WEBP image (Maximum 2MB).
+</div>
+
+<img
+id="previewImage"
+src=""
+class="img-thumbnail mt-2 d-none"
+width="150">
+<select
+name="status"
+class="form-control"
+required>
+
+<option value="">Select Status</option>
 <option value="1">Active</option>
 <option value="0">Inactive</option>
+
 </select>
+
+<div class="invalid-feedback">
+Please select status.
+</div>
 
 </div>
 
@@ -196,11 +255,129 @@
 <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
 
 <script>
+    document.querySelectorAll("form").forEach(form=>{
+
+form.addEventListener("submit",function(){
+
+const btn=this.querySelector("button[type='submit'],button:not([type])");
+
+if(btn){
+
+btn.disabled=true;
+
+btn.innerHTML="Please Wait...";
+
+}
+
+});
+
+});
+
+document.querySelectorAll("input[type=file]").forEach(input=>{
+
+input.addEventListener("change",function(){
+
+const file=this.files[0];
+
+if(!file) return;
+
+const allowed=['image/jpeg','image/png','image/webp'];
+
+if(!allowed.includes(file.type)){
+
+alert("Only JPG, PNG and WEBP images are allowed.");
+
+this.value='';
+
+return;
+
+}
+
+if(file.size>2*1024*1024){
+
+alert("Image size must be less than 2 MB.");
+
+this.value='';
+
+return;
+
+}
+
+});
+
+});
+
+const image=document.getElementById('blogImage');
+
+if(image){
+
+image.addEventListener('change',function(){
+
+const file=this.files[0];
+
+if(file){
+
+const preview=document.getElementById('previewImage');
+
+preview.src=URL.createObjectURL(file);
+
+preview.classList.remove('d-none');
+
+}
+
+});
+
+}
+document.querySelectorAll("input[type=text]").forEach(input=>{
+
+input.addEventListener("input",function(){
+
+this.value=this.value.replace(/^\s+/,"");
+
+});
+
+});
+
+document.querySelectorAll("input[type=text]").forEach(input=>{
+
+input.addEventListener("blur",function(){
+
+this.value=this.value.trim().replace(/\s+/g," ");
+
+});
+
+});
 // Add Editor
-ClassicEditor.create(document.querySelector('#addEditor'), {
-    ckfinder: {
-        uploadUrl: "{{ url('admin/blogs/upload-image') }}?_token={{ csrf_token() }}"
-    }
+let addEditor;
+
+ClassicEditor
+.create(document.querySelector('#addEditor'),{
+
+ckfinder:{
+uploadUrl:"{{ url('admin/blogs/upload-image') }}?_token={{ csrf_token() }}"
+}
+
+})
+
+.then(editor=>{
+
+addEditor=editor;
+
+});
+document.querySelector('#addBlog form').addEventListener('submit',function(e){
+
+const text=addEditor.getData().replace(/<[^>]*>/g,'').trim();
+
+if(text===''){
+
+e.preventDefault();
+
+document.getElementById('contentError').classList.remove('d-none');
+
+return false;
+
+}
+
 });
 
 // Edit Editors

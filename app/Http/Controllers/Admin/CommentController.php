@@ -17,21 +17,30 @@ class CommentController extends Controller
     }
 
     // 🔥 DELETE COMMENT
-    public function delete($id)
-    {
-        Comment::findOrFail($id)->delete();
-
-        return back()->with('success', 'Comment deleted successfully');
+   public function delete($id)
+{
+    if (!auth()->user()->hasPermission('comments.delete') && !auth()->user()->is_admin) {
+        abort(403);
     }
+
+    $comment = Comment::findOrFail($id);
+    $comment->delete();
+
+    return back()->with('success', 'Comment deleted successfully.');
+}
 
     // 🔥 CHANGE STATUS (APPROVE / REJECT)
-    public function status($id)
-    {
-        $comment = Comment::findOrFail($id);
-
-        $comment->status = !$comment->status;
-        $comment->save();
-
-        return back()->with('success', 'Comment status updated');
+  public function status($id)
+{
+    if (!auth()->user()->hasPermission('comments.edit') && !auth()->user()->is_admin) {
+        abort(403);
     }
+
+    $comment = Comment::findOrFail($id);
+
+    $comment->status = !$comment->status;
+    $comment->save();
+
+    return back()->with('success', 'Comment status updated successfully.');
+}
 }

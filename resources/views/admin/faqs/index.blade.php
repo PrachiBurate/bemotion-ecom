@@ -37,6 +37,17 @@
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
 
+<!-- ================= VALIDATION ERRORS ================= -->
+@if($errors->any())
+<div class="alert alert-danger mt-2">
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <!-- ================= TABLE CARD ================= -->
 <div class="card mt-3">
 <div class="card-body">
@@ -51,7 +62,7 @@
 </tr>
 </thead>
 <tbody>
-@foreach($faqs as $faq)
+@forelse($faqs as $faq)
 <tr>
     <td>{{ $loop->iteration }}</td>
 
@@ -77,7 +88,7 @@
 
             {{-- DELETE --}}
             @if($user->hasPermission('faqs.delete') || $user->is_admin)
-            <form action="/faqs/delete/{{ $faq->id }}" method="POST">
+            <form action="/faqs/delete/{{ $faq->id }}" method="POST" onsubmit="return confirm('Delete this FAQ?');">
                 @csrf
                 <button class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -86,7 +97,11 @@
         </div>
     </td>
 </tr>
-@endforeach
+@empty
+<tr>
+    <td colspan="4" class="text-center text-muted">No FAQs found.</td>
+</tr>
+@endforelse
 </tbody>
 </table>
 
@@ -112,17 +127,23 @@
 
     <div class="modal-body">
 
+        <label class="form-label">Question</label>
         <input type="text" name="question"
             class="form-control mb-2"
+            value="{{ old('question') }}"
             placeholder="Question" required>
+        @error('question')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+        <label class="form-label">Answer</label>
         <textarea name="answer"
             class="form-control mb-2"
-            placeholder="Answer" required></textarea>
+            placeholder="Answer" required>{{ old('answer') }}</textarea>
+        @error('answer')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+        <label class="form-label">Status</label>
         <select name="status" class="form-control">
-            <option value="1">Active</option>
-            <option value="0">Inactive</option>
+            <option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Active</option>
+            <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
         </select>
 
     </div>
@@ -152,15 +173,18 @@
 
     <div class="modal-body">
 
+        <label class="form-label">Question</label>
         <input type="text" name="question"
             value="{{ $faq->question }}"
             class="form-control mb-2"
             placeholder="Question" required>
 
+        <label class="form-label">Answer</label>
         <textarea name="answer"
             class="form-control mb-2"
             placeholder="Answer" required>{{ $faq->answer }}</textarea>
 
+        <label class="form-label">Status</label>
         <select name="status" class="form-control">
             <option value="1" {{ $faq->status ? 'selected' : '' }}>Active</option>
             <option value="0" {{ !$faq->status ? 'selected' : '' }}>Inactive</option>

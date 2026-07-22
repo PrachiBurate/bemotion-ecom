@@ -25,6 +25,10 @@
 <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
+@if(session('error'))
+<div class="alert alert-danger">{{ session('error') }}</div>
+@endif
+
 <div class="card mt-3">
 <div class="card-body">
 
@@ -41,12 +45,12 @@
 </thead>
 
 <tbody>
-@foreach($queries as $q)
+@forelse($queries as $q)
 <tr>
     <td>{{ $loop->iteration }}</td>
     <td>{{ $q->name }}</td>
     <td>{{ $q->email }}</td>
-    <td>{{ $q->message }}</td>
+    <td>{{ \Illuminate\Support\Str::limit($q->message, 100) }}</td>
 
     <td>
         <span class="badge {{ $q->status ? 'bg-success' : 'bg-warning' }}">
@@ -66,7 +70,7 @@
 
         {{-- DELETE --}}
         @if($user->hasPermission('contact_queries.delete') || $user->is_admin)
-        <form method="POST" action="/admin/contact-queries/delete/{{ $q->id }}">
+        <form method="POST" action="/admin/contact-queries/delete/{{ $q->id }}" onsubmit="return confirm('Delete this query?');">
             @csrf
             <button class="btn btn-sm btn-danger">Delete</button>
         </form>
@@ -74,7 +78,11 @@
 
     </td>
 </tr>
-@endforeach
+@empty
+<tr>
+    <td colspan="6" class="text-center text-muted">No queries found.</td>
+</tr>
+@endforelse
 </tbody>
 </table>
 

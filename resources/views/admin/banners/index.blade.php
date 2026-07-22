@@ -25,7 +25,23 @@
 @if(session('success'))
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
+@if($errors->any())
 
+<div class="alert alert-danger mt-2">
+
+<ul class="mb-0">
+
+@foreach($errors->all() as $error)
+
+<li>{{ $error }}</li>
+
+@endforeach
+
+</ul>
+
+</div>
+
+@endif
 <div class="card mt-3">
 <div class="card-body">
 
@@ -108,7 +124,19 @@
     {{-- IMAGE UPLOAD --}}
     <div class="mb-3">
         <label>Upload New Image</label>
-        <input type="file" name="image" class="form-control">
+        <input
+type="file"
+name="image"
+class="form-control"
+accept=".jpg,.jpeg,.png,.webp">
+
+<div class="form-text">
+Allowed formats: JPG, JPEG, PNG, WEBP (Max 2 MB)
+</div>
+
+<img
+class="img-thumbnail mt-3 preview-image d-none"
+width="180">
     </div>
 
     {{-- CURRENT IMAGE --}}
@@ -135,5 +163,76 @@
 </div>
 </div>
 @endforeach
+<script>document.querySelectorAll('.banner-image').forEach(function(input){
 
+    input.addEventListener('change',function(){
+
+        let file=this.files[0];
+
+        if(!file) return;
+
+        let preview=this.closest('.mb-3').querySelector('.preview-image');
+
+        preview.src=URL.createObjectURL(file);
+
+        preview.classList.remove('d-none');
+
+    });
+
+});
+
+document.querySelectorAll('.banner-image').forEach(function(input){
+
+input.addEventListener('change',function(){
+
+let file=this.files[0];
+
+if(!file) return;
+
+const allowed=[
+'image/jpeg',
+'image/png',
+'image/webp'
+];
+
+if(!allowed.includes(file.type)){
+
+alert('Only JPG, PNG and WEBP images are allowed.');
+
+this.value='';
+
+return;
+
+}
+
+if(file.size>2*1024*1024){
+
+alert('Maximum image size is 2 MB.');
+
+this.value='';
+
+}
+
+});
+
+});
+
+document.querySelectorAll("form").forEach(form=>{
+
+form.addEventListener("submit",function(){
+
+let btn=this.querySelector("button[type='submit'],button:not([type])");
+
+if(btn){
+
+btn.disabled=true;
+
+btn.innerHTML="Please Wait...";
+
+}
+
+});
+
+});
+</script>
 @endsection

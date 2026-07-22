@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -10,47 +11,56 @@ class SettingController extends Controller
     public function index()
     {
         $setting = Setting::first();
+
         return view('admin.settings.index', compact('setting'));
     }
 
     public function update(Request $request)
     {
+        $user = auth()->user();
+
+        // Permission check (server-side, not just hiding the button in Blade)
+        if (!$user || !($user->hasPermission('settings.update') || $user->is_admin)) {
+            abort(403, 'You are not authorized to update settings.');
+        }
+
+        $validated = $request->validate([
+            'site_name'      => ['required', 'string', 'max:255'],
+            'slogan'         => ['nullable', 'string', 'max:255'],
+            'contact_number' => ['nullable', 'string', 'max:20'],
+            'email'          => ['nullable', 'email', 'max:255'],
+            'facebook_url'   => ['nullable', 'url', 'max:255'],
+            'instagram_url'  => ['nullable', 'url', 'max:255'],
+            'linkedin_url'   => ['nullable', 'url', 'max:255'],
+            'twitter_url'    => ['nullable', 'url', 'max:255'],
+            'logo'           => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'site_name.required' => 'The site name is required.',
+            'email.email'        => 'Please enter a valid email address.',
+            'logo.image'         => 'The logo must be an image file.',
+            'logo.mimes'         => 'The logo must be a jpg, jpeg, png, or webp file.',
+            'logo.max'           => 'The logo may not be larger than 2MB.',
+        ]);
+
         $setting = Setting::first();
 
-        // LOGO UPLOAD
         if ($request->hasFile('logo')) {
             $file = $request->file('logo');
-            $logo = time().'.'.$file->getClientOriginalExtension();
+            $logo = time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
             $file->move(public_path('assets/images/logo'), $logo);
+
+            // Remove the old logo file if one exists
+            if ($setting && $setting->logo && file_exists(public_path('assets/images/logo/'.$setting->logo))) {
+                @unlink(public_path('assets/images/logo/'.$setting->logo));
+            }
         } else {
             $logo = $setting->logo ?? null;
         }
 
-        if (!$setting) {
-            Setting::create([
-                'site_name' => $request->site_name,
-                'slogan' => $request->slogan,
-                'logo' => $logo,
-                'contact_number' => $request->contact_number,
-                'email' => $request->email,
-                'facebook_url' => $request->facebook_url,
-                'instagram_url' => $request->instagram_url,
-                'linkedin_url' => $request->linkedin_url,
-                'twitter_url' => $request->twitter_url,
-            ]);
-        } else {
-            $setting->update([
-                'site_name' => $request->site_name,
-                'slogan' => $request->slogan,
-                'logo' => $logo,
-                'contact_number' => $request->contact_number,
-                'email' => $request->email,
-                'facebook_url' => $request->facebook_url,
-                'instagram_url' => $request->instagram_url,
-                'linkedin_url' => $request->linkedin_url,
-                'twitter_url' => $request->twitter_url,
-            ]);
-        }
+        $data = collect($validated)->except('logo')->toArray();
+        $data['logo'] = $logo;
+
+        Setting::updateOrCreate(['id' => $setting->id ?? 0], $data);
 
         return back()->with('success', 'Settings Updated Successfully');
     }

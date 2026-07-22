@@ -19,11 +19,50 @@ class BlogController extends Controller
     // 🔥 STORE BLOG
   public function store(Request $request)
 {
-    $request->validate([
-        'title' => 'required',
-        'content' => 'required',
-        'image' => 'required|image'
-    ]);
+  $request->validate([
+    'title' => [
+        'required',
+        'string',
+        'min:5',
+        'max:255',
+        'unique:blogs,title'
+    ],
+
+    'content' => [
+        'required',
+        'string',
+        'min:50'
+    ],
+
+    'image' => [
+        'required',
+        'image',
+        'mimes:jpeg,jpg,png,webp',
+        'max:2048'
+    ],
+
+    'status' => [
+        'required',
+        'in:0,1'
+    ]
+
+],[
+    'title.required' => 'Blog title is required.',
+    'title.min' => 'Title must be at least 5 characters.',
+    'title.max' => 'Title cannot exceed 255 characters.',
+    'title.unique' => 'This blog title already exists.',
+
+    'content.required' => 'Blog content is required.',
+    'content.min' => 'Content must contain at least 50 characters.',
+
+    'image.required' => 'Please upload a featured image.',
+    'image.image' => 'Uploaded file must be an image.',
+    'image.mimes' => 'Only JPG, JPEG, PNG and WEBP images are allowed.',
+    'image.max' => 'Image size cannot exceed 2MB.',
+
+    'status.required' => 'Please select blog status.',
+    'status.in' => 'Invalid status selected.'
+]);
 
     $imageName = null;
 
@@ -47,11 +86,37 @@ class BlogController extends Controller
     {
         $blog = Blog::findOrFail($id);
 
-        $request->validate([
-            'title' => 'required',
-            'content' => 'required',
-            'status' => 'required'
-        ]);
+    $request->validate([
+
+    'title' => [
+        'required',
+        'string',
+        'min:5',
+        'max:255',
+        'unique:blogs,title,'.$id
+    ],
+
+    'content' => [
+        'required',
+        'string',
+        'min:50'
+    ],
+
+    'image' => [
+        'nullable',
+        'image',
+        'mimes:jpeg,jpg,png,webp',
+        'max:2048'
+    ],
+
+    'status' => [
+        'required',
+        'in:0,1'
+    ]
+
+],[
+    'title.unique'=>'Another blog already has this title.'
+]);
 
         $data = [
             'title' => $request->title,
@@ -106,33 +171,33 @@ class BlogController extends Controller
         return $count ? $slug . '-' . ($count + 1) : $slug;
     }
 
-   public function uploadImage(Request $request)
+public function uploadImage(Request $request)
 {
-    if ($request->hasFile('upload')) {
+    $request->validate([
+        'upload' => [
+            'required',
+            'image',
+            'mimes:jpeg,jpg,png,gif,webp',
+            'max:2048'
+        ]
+    ]);
 
-        $file = $request->file('upload');
+    $file = $request->file('upload');
 
-        $filename = time() . '.' . $file->getClientOriginalExtension();
+    $filename = uniqid().'.'.$file->extension();
 
-        //   MAKE SURE FOLDER EXISTS
-        $path = public_path('assets/images/blog');
+    $path = public_path('assets/images/blog');
 
-        if (!file_exists($path)) {
-            mkdir($path, 0777, true);
-        }
-
-        $file->move($path, $filename);
-
-        return response()->json([
-            'uploaded' => 1,
-            'fileName' => $filename,
-            'url' => asset('assets/images/blog/' . $filename)
-        ]);
+    if(!file_exists($path)){
+        mkdir($path,0777,true);
     }
 
+    $file->move($path,$filename);
+
     return response()->json([
-        'uploaded' => 0,
-        'error' => ['message' => 'Upload failed']
+        'uploaded'=>1,
+        'fileName'=>$filename,
+        'url'=>asset('assets/images/blog/'.$filename)
     ]);
 }
 }

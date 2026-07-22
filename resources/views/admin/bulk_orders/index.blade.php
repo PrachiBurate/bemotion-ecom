@@ -19,6 +19,11 @@
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
 
+{{-- ERROR --}}
+@if(session('error'))
+<div class="alert alert-danger mt-2">{{ session('error') }}</div>
+@endif
+
 <div class="card mt-3">
 <div class="card-body">
 
@@ -37,14 +42,14 @@
 </thead>
 
 <tbody>
-@foreach($orders as $o)
+@forelse($orders as $o)
 <tr>
 <td>{{ $loop->iteration }}</td>
 <td>{{ $o->name }}</td>
 <td>{{ $o->email }}</td>
 <td>{{ $o->phone }}</td>
 <td>{{ $o->city }}</td>
-<td>{{ $o->message }}</td>
+<td>{{ \Illuminate\Support\Str::limit($o->message, 100) }}</td>
 
 <td>
 <span class="badge {{ $o->status ? 'bg-success' : 'bg-warning' }}">
@@ -64,7 +69,7 @@
 
 {{-- DELETE --}}
 @if($user->hasPermission('bulk_orders.delete') || $user->is_admin)
-<form method="POST" action="/admin/bulk-orders/delete/{{ $o->id }}">
+<form method="POST" action="/admin/bulk-orders/delete/{{ $o->id }}" onsubmit="return confirm('Delete this order?');">
 @csrf
 <button class="btn btn-danger btn-sm">Delete</button>
 </form>
@@ -73,7 +78,11 @@
 </td>
 
 </tr>
-@endforeach
+@empty
+<tr>
+    <td colspan="8" class="text-center text-muted">No bulk orders found.</td>
+</tr>
+@endforelse
 </tbody>
 </table>
 

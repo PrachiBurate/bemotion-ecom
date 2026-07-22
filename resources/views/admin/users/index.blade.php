@@ -38,7 +38,15 @@
 
 <div class="alert alert-danger mt-2">{{ session('error') }}</div>
 @endif
-
+@if ($errors->any())
+<div class="alert alert-danger">
+    <ul class="mb-0">
+        @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
 <div class="card mt-3">
 <div class="card-body">
 
@@ -113,27 +121,64 @@
 
 <div class="modal-body">
 
-    <input type="text" name="name" placeholder="Name" class="form-control mb-3" required>
+    <input
+type="text"
+name="name"
+class="form-control mb-3"
+placeholder="Name"
+required
+minlength="3"
+maxlength="100"
+pattern="[A-Za-z ]+"
+title="Only letters and spaces allowed">
 
-    <input type="text" name="username" placeholder="Username" class="form-control mb-3" required>
-
-    <input type="email" name="email" placeholder="Email" class="form-control mb-3" required>
-
+   <input
+type="text"
+name="username"
+class="form-control mb-3"
+placeholder="Username"
+required
+minlength="4"
+maxlength="30"
+pattern="[A-Za-z0-9_-]+"
+title="Only letters, numbers, underscore and dash allowed">
+   <input
+type="email"
+name="email"
+class="form-control mb-3"
+placeholder="Email"
+required
+maxlength="255">
     {{-- PASSWORD --}}
     <div class="input-group mb-3">
-        <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
-        <span class="input-group-text toggle-password" data-target="password">
+       <input
+type="password"
+name="password"
+id="password"
+class="form-control"
+placeholder="Password"
+required
+minlength="8"
+maxlength="20"
+pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*#?&]).{8,20}"
+title="8-20 characters with uppercase, lowercase, number and special character">
+  <span class="input-group-text toggle-password" data-target="password">
             <i class="feather-eye"></i>
         </span>
+       
     </div>
-
+ <small id="passwordHelp" class="text-danger"></small>
     {{--   FIXED POSITION --}}
-    <select name="role_id" class="form-control" required>
-        <option value="">Select Role</option>
-        @foreach($roles as $role)
-            <option value="{{ $role->id }}">{{ $role->name }}</option>
-        @endforeach
-    </select>
+ <select name="role_id" class="form-control" required>
+    <option value="">Select Role</option>
+
+    @foreach($roles as $role)
+        <option value="{{ $role->id }}">
+            {{ $role->name }}
+        </option>
+    @endforeach
+
+</select>
 
 </div>
 
@@ -173,11 +218,20 @@
 
     {{-- PASSWORD --}}
     <div class="input-group mb-3">
-        <input type="password" name="password" id="edit_password{{ $user->id }}" class="form-control" placeholder="New Password (optional)">
-        <span class="input-group-text toggle-password" data-target="edit_password{{ $user->id }}">
+       <input
+type="password"
+name="password"
+id="edit_password{{ $user->id }}"
+class="form-control"
+placeholder="New Password (Optional)"
+minlength="8"
+maxlength="20"
+pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@$!%*#?&]).{8,20}">
+  <span class="input-group-text toggle-password" data-target="edit_password{{ $user->id }}">
             <i class="feather-eye"></i>
         </span>
     </div>
+ <small id="passwordHelp" class="text-danger"></small>
 
     <select name="role_id" class="form-control" required>
         @foreach($roles as $role)
@@ -220,6 +274,50 @@ document.querySelectorAll(".toggle-password").forEach(btn => {
         feather.replace();
     });
 });
+document.querySelectorAll('input').forEach(input => {
+
+    input.addEventListener('input', function () {
+
+        this.value = this.value.replace(/^\s+/, '');
+
+    });
+
+});
+document.querySelectorAll('input[name="name"]').forEach(input => {
+
+    input.addEventListener('input', function () {
+
+        this.value = this.value.replace(/[^A-Za-z ]/g, '');
+
+    });
+
+});
+document.querySelectorAll('input[name="username"]').forEach(input => {
+
+    input.addEventListener('input', function () {
+
+        this.value = this.value.replace(/[^A-Za-z0-9_-]/g, '');
+
+    });
+
+});
+
+const password = document.getElementById('password');
+
+if(password){
+
+password.addEventListener('keyup', function(){
+
+const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&]).{8,20}$/;
+
+document.getElementById('passwordHelp').innerHTML =
+regex.test(this.value)
+? '<span class="text-success">Strong Password</span>'
+: 'Password must contain uppercase, lowercase, number and special character';
+
+});
+
+}
 </script>
 
 @endsection

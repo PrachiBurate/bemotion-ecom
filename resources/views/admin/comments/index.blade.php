@@ -24,7 +24,21 @@
 @if(session('success'))
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
+@if($errors->any())
+<div class="alert alert-danger">
 
+<ul class="mb-0">
+
+@foreach($errors->all() as $error)
+
+<li>{{ $error }}</li>
+
+@endforeach
+
+</ul>
+
+</div>
+@endif
 <div class="card mt-3">
 <div class="card-body">
 
@@ -68,9 +82,11 @@
         @if($user->hasPermission('comments.edit') || $user->is_admin)
         <form action="/blog-comments/status/{{ $comment->id }}" method="POST">
             @csrf
-            <button class="btn btn-sm btn-info">
-                {{ $comment->status ? 'Disable' : 'Approve' }}
-            </button>
+           <button
+    class="btn btn-sm btn-info"
+    onclick="return confirm('Are you want to change the comment status?')">
+    {{ $comment->status ? 'Disable' : 'Approve' }}
+</button>
         </form>
         @endif
 
@@ -78,7 +94,11 @@
         @if($user->hasPermission('comments.delete') || $user->is_admin)
         <form action="/blog-comments/delete/{{ $comment->id }}" method="POST">
             @csrf
-            <button class="btn btn-sm btn-danger">Delete</button>
+          <button
+    class="btn btn-sm btn-danger"
+    onclick="return confirm('Are you sure you want to delete this comment?')">
+    Delete
+</button>
         </form>
         @endif
 
@@ -94,5 +114,23 @@
 
 </div>
 </main>
+<script>
+document.querySelectorAll("form").forEach(form => {
 
+    form.addEventListener("submit", function () {
+
+        let btn = this.querySelector("button");
+
+        if(btn){
+
+            btn.disabled = true;
+
+            btn.innerHTML = "Please Wait...";
+
+        }
+
+    });
+
+});
+</script>
 @endsection

@@ -32,6 +32,16 @@
 <div class="alert alert-success mt-2">{{ session('success') }}</div>
 @endif
 
+@if($errors->any())
+<div class="alert alert-danger mt-2">
+    <ul class="mb-0">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <!-- TABLE -->
 <div class="card mt-3">
 <div class="card-body">
@@ -48,7 +58,7 @@
 </thead>
 
 <tbody>
-@foreach($categories as $c)
+@forelse($categories as $c)
 <tr>
 <td>{{ $loop->iteration }}</td>
 
@@ -75,7 +85,7 @@ Edit
 @endif
 
 @if($user->hasPermission('categories.delete') || $user->is_admin)
-<form action="/admin/categories/delete/{{ $c->id }}" method="POST">
+<form action="/admin/categories/delete/{{ $c->id }}" method="POST" onsubmit="return confirm('Delete this category?');">
 @csrf
 <button class="btn btn-danger btn-sm">Delete</button>
 </form>
@@ -83,7 +93,11 @@ Edit
 
 </td>
 </tr>
-@endforeach
+@empty
+<tr>
+    <td colspan="5" class="text-center text-muted">No categories found.</td>
+</tr>
+@endforelse
 </tbody>
 </table>
 
@@ -108,13 +122,19 @@ Edit
 
 <div class="modal-body">
 
-<input type="text" name="name" class="form-control mb-2" placeholder="Category Name" required>
+<label class="form-label">Name</label>
+<input type="text" name="name" class="form-control mb-2" value="{{ old('name') }}" placeholder="Category Name" required>
+@error('name')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
-<input type="file" name="image" class="form-control mb-2" required>
+<label class="form-label">Image</label>
+<input type="file" name="image" class="form-control mb-2" accept="image/png,image/jpeg,image/jpg,image/webp" required>
+<small class="text-muted d-block mb-2">JPG, PNG or WEBP. Max 2MB.</small>
+@error('image')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
 
+<label class="form-label">Status</label>
 <select name="status" class="form-control">
-<option value="1">Active</option>
-<option value="0">Inactive</option>
+<option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Active</option>
+<option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Inactive</option>
 </select>
 
 </div>
@@ -146,14 +166,18 @@ Edit
 
 <div class="modal-body">
 
+<label class="form-label">Name</label>
 <input type="text" name="name" value="{{ $c->name }}" class="form-control mb-2" required>
 
-<input type="file" name="image" class="form-control mb-2">
+<label class="form-label">Image</label>
+<input type="file" name="image" class="form-control mb-2" accept="image/png,image/jpeg,image/jpg,image/webp">
+<small class="text-muted d-block mb-2">Leave empty to keep the current image. Max 2MB.</small>
 
 @if($c->image)
-<img src="{{ asset('assets/images/categories/'.$c->image) }}" width="80" class="mb-2">
+<img src="{{ asset('assets/images/categories/'.$c->image) }}" width="80" class="mb-2 d-block">
 @endif
 
+<label class="form-label">Status</label>
 <select name="status" class="form-control">
 <option value="1" {{ $c->status ? 'selected' : '' }}>Active</option>
 <option value="0" {{ !$c->status ? 'selected' : '' }}>Inactive</option>
